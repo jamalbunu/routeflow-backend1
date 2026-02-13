@@ -98,3 +98,136 @@ app.get('/api/auth/me', (req, res) => {
     }
   });
 });
+
+// ===== ROUTES API =====
+
+// Get all routes for user
+app.get('/api/routes', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token || !token.startsWith('demo-token-')) {
+    return res.status(401).json({ error: 'Access denied' });
+  }
+  
+  const userId = token.replace('demo-token-', '');
+  const userRoutes = routes.filter(r => r.driverId === userId);
+  
+  res.json({ routes: userRoutes });
+});
+
+// Create new route
+app.post('/api/routes', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token || !token.startsWith('demo-token-')) {
+    return res.status(401).json({ error: 'Access denied' });
+  }
+  
+  const userId = token.replace('demo-token-', '');
+  const { name, stops, startTime, notes } = req.body;
+
+  const newRoute = {
+    id: Date.now().toString(),
+    driverId: userId,
+    name: name || 'New Route',
+    stops: stops || [],
+    startTime: startTime || new Date(),
+    notes: notes || '',
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  routes.push(newRoute);
+  res.status(201).json({ message: 'Route created', route: newRoute });
+});
+
+// Update route status
+app.patch('/api/routes/:id/status', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token || !token.startsWith('demo-token-')) {
+    return res.status(401).json({ error: 'Access denied' });
+  }
+  
+  const userId = token.replace('demo-token-', '');
+  const { status } = req.body;
+  
+  const route = routes.find(r => r.id === req.params.id && r.driverId === userId);
+  
+  if (!route) {
+    return res.status(404).json({ error: 'Route not found' });
+  }
+
+  route.status = status;
+  route.updatedAt = new Date();
+
+  res.json({ message: 'Route updated', route });
+});
+
+// ===== DRIVERS API =====
+
+// Get driver stats
+app.get('/api/drivers/stats', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token || !token.startsWith('demo-token-')) {
+    return res.status(401).json({ error: 'Access denied' });
+  }
+  
+  const userId = token.replace('demo-token-', '');
+  const driverRoutes = routes.filter(r => r.driverId === userId);
+  
+  const stats = {
+    totalRoutes: driverRoutes.length,
+    completedRoutes: driverRoutes.filter(r => r.status === 'completed').length,
+    totalStops: driverRoutes.reduce((acc, r) => acc + (r.stops?.length || 0), 0),
+    completedStops: driverRoutes.reduce((acc, r) => {
+      return acc + (r.stops?.filter(s => s.status === 'visited')?.length || 0);
+    }, 0)
+  };
+
+  res.json({ stats });
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'RouteFlow AI API is running',
+    users: users.length,
+    routes: routes.length
+  });
+});
+
+// Serve landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+n});
+
+// Driver app
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'driver-app-v2.html'));
+});
+
+// Admin dashboard
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`RouteFlow AI server running on port ${PORT}`);
+  console.log(`Website: http://localhost:${PORT}`);
+  console.log(`Driver app: http://localhost:${PORT}/app`);
+  console.log(`Admin panel: http://localhost:${PORT}/admin`);
+});
