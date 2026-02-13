@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RouteFlow Pro Driver</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif;-webkit-tap-highlight-color:transparent}
+    :root{--primary:#10b981;--bg:#0f172a;--card:#1e293b;--border:#334155;--text:#f8fafc;--text-muted:#94a3b8}
+    body{background:var(--bg);color:var(--text);min-height:100vh}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    
+    .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(180deg,var(--bg) 0%,#1e293b 100%);animation:slideUp .5s ease}
+    .logo-container{text-align:center;margin-bottom:40px}
+    .logo{width:100px;height:100px;background:linear-gradient(135deg,var(--primary),#14b8a6);border-radius:28px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 12px 40px rgba(16,185,129,.4);animation:pulse 2s infinite;font-size:50px}
+    .logo-title{font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--primary),#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .logo-subtitle{color:var(--text-muted);margin-top:8px;font-size:14px}
+    
+    .card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 28px;width:100%;max-width:400px;animation:slideUp .6s ease .1s both}
+    .card-title{font-size:24px;font-weight:700;margin-bottom:8px;text-align:center}
+    .card-subtitle{color:var(--text-muted);text-align:center;margin-bottom:28px;font-size:14px}
+    
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+    .form-input{width:100%;padding:16px 18px;border:2px solid var(--border);border-radius:14px;background:var(--bg);color:var(--text);font-size:16px}
+    .form-input:focus{outline:none;border-color:var(--primary);background:rgba(16,185,129,.05)}
+    
+    .btn{width:100%;padding:18px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),#14b8a6);color:white;box-shadow:0 4px 20px rgba(16,185,129,.3)}
+    .btn-secondary{background:transparent;border:2px solid var(--border);color:var(--text-muted);margin-top:12px}
+    
+    .error-message{color:#ef4444;font-size:14px;margin-top:12px;text-align:center;display:none;padding:12px;background:rgba(239,68,68,.1);border-radius:10px}
+    .demo-info{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:16px;margin-top:24px;text-align:center}
+    .demo-info-title{color:var(--primary);font-weight:600;font-size:13px;margin-bottom:4px}
+    .demo-info-text{color:var(--text-muted);font-size:12px}
+    
+    .app-screen{display:none;min-height:100vh;background:var(--bg);padding-bottom:100px}
+    .app-header{background:linear-gradient(180deg,var(--bg) 0%,transparent 100%);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .app-header-left{display:flex;align-items:center;gap:12px}
+    .app-logo-small{width:44px;height:44px;background:linear-gradient(135deg,var(--primary),#14b8a6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .app-greeting{font-size:13px;color:var(--text-muted)}
+    .app-name{font-size:16px;font-weight:700}
+    .header-actions{display:flex;gap:8px}
+    .header-btn{width:44px;height:44px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+    
+    .quick-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 20px;margin-bottom:24px}
+    .quick-stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center}
+    .quick-stat-value{font-size:24px;font-weight:800;color:var(--primary)}
+    .quick-stat-label{font-size:11px;color:var(--text-muted);margin-top:4px;text-transform:uppercase}
+    
+    .section-title{display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin-bottom:16px}
+    .section-title h2{font-size:18px;font-weight:700}
+    .section-title a{color:var(--primary);font-size:13px;font-weight:600;text-decoration:none}
+    
+    .routes-container{padding:0 20px}
+    .route-card{background:var(--card);border:1px solid var(--border);border-radius:20px;margin-bottom:16px;overflow:hidden}
+    .route-header{padding:20px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border)}
+    .route-name{font-weight:700;font-size:17px;margin-bottom:6px}
+    .route-meta{display:flex;gap:16px;color:var(--text-muted);font-size:13px}
+    .route-status{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase}
+    .status-pending{background:rgba(245,158,11,.15);color:#f59e0b}
+    .status-active{background:rgba(16,185,129,.15);color:var(--primary)}
+    .status-completed{background:rgba(59,130,246,.15);color:#3b82f6}
+    
+    .route-progress{padding:16px 20px;border-bottom:1px solid var(--border)}
+    .progress-header{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}
+    .progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),#14b8a6);border-radius:4px}
+    
+    .stops-preview{padding:16px 20px}
+    .stop-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:12px;margin-bottom:10px;cursor:pointer;border:2px solid transparent}
+    .stop-item.completed{opacity:.6}
+    .stop-checkbox{width:28px;height:28px;border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .stop-item.completed .stop-checkbox{background:var(--primary);border-color:var(--primary)}
+    .stop-checkbox svg{width:16px;height:16px;color:white;opacity:0}
+    .stop-item.completed .stop-checkbox svg{opacity:1}
+    .stop-info{flex:1;min-width:0}
+    .stop-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stop-item.completed .stop-name{text-decoration:line-through;color:var(--text-muted)}
+    .stop-btn{width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+    
+    .route-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 20px;border-top:1px solid var(--border)}
+    .route-action-btn{padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .route-action-btn.primary{background:linear-gradient(135deg,var(--primary),#14b8a6);border-color:transparent;color:white}
+    
+    .empty-state{text-align:center;padding:60px 20px}
+    .empty-icon{width:100px;height:100px;background:var(--card);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:24px;font-size:48px}
+    .empty-title{font-size:20px;font-weight:700;margin-bottom:8px}
+    .empty-text{color:var(--text-muted);font-size:14px;margin-bottom:24px}
+    
+    .fab-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:12px;z-index:100}
+    .fab{width:60px;height:60px;background:linear-gradient(135deg,var(--primary),#14b8a6);border:none;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(16,185,129,.4);font-size:28px}
+    .fab-secondary{width:50px;height:50px;background:var(--card);border:1px solid var(--border);font-size:22px}
+    
+    .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay.active{display:flex}
+    .modal{background:var(--card);border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:24px 24px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:10}
+    .modal-title{font-size:20px;font-weight:700}
+    .modal-close{width:40px;height:40px;background:var(--bg);border:none;border-radius:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px}
+    .modal-body{padding:24px}
+    
+    .photo-upload{border:2px dashed var(--border);border-radius:16px;padding:40px 24px;text-align:center;cursor:pointer;margin-bottom:20px}
+    .photo-upload-icon{width:64px;height:64px;background:var(--bg);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:32px}
+    .photo-upload-title{font-weight:600;margin-bottom:4px}
+    .photo-upload-text{color:var(--text-muted);font-size:13px}
+    .photo-upload input{display:none}
+    
+    .stop-input-row{display:flex;gap:10px;margin-bottom:12px;align-items:center}
+    .stop-number-badge{width:36px;height:36px;background:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+    .btn-remove-stop{width:36px;height:36px;background:rgba(239,68,68,.1);border:none;border-radius:10px;color:#ef4444;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+    .btn-add{width:100%;padding:16px;background:var(--bg);border:2px dashed var(--border);border-radius:14px;color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px}
+    
+    .optimize-btn{width:100%;padding:16px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);border:none;border-radius:14px;color:white;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+    
+    .options-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .option-card{padding:16px;background:var(--bg);border:2px solid var(--border);border-radius:14px;cursor:pointer;text-align:center}
+    .option-card.active{border-color:var(--primary);background:rgba(16,185,129,.1)}
+    .option-icon{width:40px;height:40px;background:var(--card);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:20px}
+    .option-title{font-size:13px;font-weight:600}
+    
+    .loading-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.95);z-index:300;align-items:center;justify-content:center;flex-direction:center}
+    .loading-overlay.active{display:flex}
+    .spinner{width:60px;height:60px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{margin-top:20px;color:var(--text-muted)}
+    
+    .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;display:flex;align-items:center;gap:12px;z-index:400;opacity:0;transition:all .3s}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+    .toast-icon{width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px}
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p class="loading-text">Bezig...</p>
+  </div>
+  
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">✓</div>
+    <span id="toastMessage">Opgeslagen!</span>
+  </div>
+  
+  <!-- Login Screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="logo-container">
+      <div class="logo">🚗</div>
+      <div class="logo-title">RouteFlow Pro</div>
+      <div class="logo-subtitle">Slimme route planning voor professionals</div>
+    </div>
+    
+    <div class="card">
+      <h2 class="card-title">Welkom terug</h2>
+      <p class="card-subtitle">Log in om je routes te beheren</p>
+      
+      <div class="form-group">
+        <label class="form-label">E-mailadres</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="demo@routeflow.ai" value="demo@routeflow.ai">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Wachtwoord</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="demo" value="demo">
+      </div>
+      
+      <button class="btn btn-primary" onclick="login()">Inloggen</button>
+      <p class="error-message" id="loginError"></p>
+      
+      <button class="btn btn-secondary" onclick="showRegister()">Nog geen account? Registreer</button>
+      
+      <div class="demo-info">
+        <div class="demo-info-title">🚀 Demo Modus</div>
+        <div class="demo-info-text">Email: demo@routeflow.ai | Wachtwoord: demo</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Register Screen -->
+  <div class="login-screen" id="registerScreen" style="display:none">
+    <div class="logo-container">
+      <div class="logo">🚗</div>
+      <div class="logo-title">RouteFlow Pro</div>
+      <div class="logo-subtitle">Maak je gratis account aan</div>
+    </div>
+    
+    <div class="card">
+      <h2 class="card-title">Registreren</h2>
+      <p class="card-subtitle">Start met efficiëntere routes</p>
+      
+      <div class="form-group">
+        <label class="form-label">Volledige naam</label>
+        <input type="text" class="form-input" id="regName" placeholder="Jouw naam">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">E-mailadres</label>
+        <input type="email" class="form-input" id="regEmail" placeholder="jouw@email.nl">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Wachtwoord</label>
+        <input type="password" class="form-input" id="regPassword" placeholder="Minimaal 4 tekens">
+      </div>
+      
+      <button class="btn btn-primary" onclick="register()">Account maken</button>
+      <p class="error-message" id="regError"></p>
+      
+      <button class="btn btn-secondary" onclick="showLogin()">Al een account? Log in</button>
+    </div>
+  </div>
+  
+  <!-- App Screen -->
+  <div class="app-screen" id="appScreen">
+    <header class="app-header">
+      <div class="app-header-left">
+        <div class="app-logo-small">🚗</div>
+        <div>
+          <div class="app-greeting">Welkom terug,</div>
+          <div class="app-name" id="userNameDisplay">Chauffeur</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="logout()">🚪</button>
+      </div>
+    </header>
+    
+    <div class="quick-stats">
+      <div class="quick-stat">
+        <div class="quick-stat-value" id="statTotalRoutes">0</div>
+        <div class="quick-stat-label">Routes</div>
+      </div>
+      <div class="quick-stat">
+        <div class="quick-stat-value" id="statTodayStops">0</div>
+        <div class="quick-stat-label">Stops vandaag</div>
+      </div>
+      <div class="quick-stat">
+        <div class="quick-stat-value" id="statCompleted">0%</div>
+        <div class="quick-stat-label">Voltooid</div>
+      </div>
+    </div>
+    
+    <div class="section-title">
+      <h2>Mijn Routes</h2>
+    </div>
+    
+    <div class="routes-container" id="routesContainer">
+      <div class="empty-state">
+        <div class="empty-icon">🗺️</div>
+        <h3 class="empty-title">Nog geen routes</h3>
+        <p class="empty-text">Maak je eerste route of upload een foto van je adreslijst.</p>
+      </div>
+    </div>
+    
+    <div class="fab-container">
+      <button class="fab fab-secondary" onclick="showPhotoModal()" title="Foto uploaden">📷</button>
+      <button class="fab" onclick="showAddRouteModal()" title="Nieuwe route">+</button>
+    </div>
+  </div>
+  
+  <!-- Add Route Modal -->
+  <div class="modal-overlay" id="addRouteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Nieuwe Route</h3>
+        <button class="modal-close" onclick="closeModal('addRouteModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Route naam</label>
+          <input type="text" class="form-input" id="routeName" placeholder="Bijv. Bezorgronde Amsterdam">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Stops (in volgorde)</label>
+          <div id="stopsList">
+            <div class="stop-input-row">
+              <div class="stop-number-badge">1</div>
+              <input type="text" class="form-input stop-input" placeholder="Adres of locatie" style="flex:1">
+            </div>
+          </div>
+          <button class="btn-add" onclick="addStopInput()">+ Stop toevoegen</button>
+        </div>
+        
+        <button class="optimize-btn" onclick="optimizeRoute()">⚡ Route Optimaliseren</button>
+        
+        <button class="btn btn-primary" onclick="saveRoute()">Route Opslaan</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Photo Upload Modal -->
+  <div class="modal-overlay" id="photoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Foto Uploaden</h3>
+        <button class="modal-close" onclick="closeModal('photoModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <label class="photo-upload">
+          <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="handlePhotoUpload(event)">
+          <div class="photo-upload-icon">📷</div>
+          <div class="photo-upload-title">Maak foto of kies uit galerij</div>
+          <div class="photo-upload-text">Van adreslijst, pakbon, etc.</div>
+        </label>
+        
+        <div id="ocrResults" style="display:none">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;font-weight:600">Gevonden adressen:</div>
+          <div id="ocrAddresses"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Data opslag
+    let currentUser = null;
+    let users = JSON.parse(localStorage.getItem('rf_users') || '[{"email":"demo@routeflow.ai","password":"demo","name":"Demo Chauffeur","createdAt":"2024-01-01"}]');
+    let routes = JSON.parse(localStorage.getItem('rf_routes') || '[]');
+    
+    // Check of al ingelogd
+    const savedUser = localStorage.getItem('rf_currentUser');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      showApp();
+    }
+    
+    function showLogin() {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('registerScreen').style.display = 'none';
+    }
+    
+    function showRegister() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('registerScreen').style.display = 'flex';
+    }
+    
+    function showApp() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('registerScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'block';
+      document.getElementById('userNameDisplay').textContent = currentUser.name;
+      loadRoutes();
+      updateStats();
+    }
+    
+    function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      const user = users.find(u => u.email === email && u.password === password);
+      if (user) {
+        currentUser = user;
+        localStorage.setItem('rf_currentUser', JSON.stringify(user));
+        showApp();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+        document.getElementById('loginError').textContent = 'Ongeldige inloggegevens';
+      }
+    }
+    
+    function register() {
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      
+      if (!name || !email || !password) {
+        document.getElementById('regError').style.display = 'block';
+        document.getElementById('regError').textContent = 'Vul alle velden in';
+        return;
+      }
+      
+      if (password.length < 4) {
+        document.getElementById('regError').textContent = 'Wachtwoord minimaal 4 tekens';
+        return;
+      }
+      
+      if (users.find(u => u.email === email)) {
+        document.getElementById('regError').textContent = 'Email al geregistreerd';
+        return;
+      }
+      
+      const newUser = { name, email, password, createdAt: new Date().toISOString() };
+      users.push(newUser);
+      localStorage.setItem('rf_users', JSON.stringify(users));
+      
+      currentUser = newUser;
+      localStorage.setItem('rf_currentUser', JSON.stringify(newUser));
+      showApp();
+    }
+    
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('rf_currentUser');
+      document.getElementById('appScreen').style.display = 'none';
+      showLogin();
+    }
+    
+    function loadRoutes() {
+      const container = document.getElementById('routesContainer');
+      const userRoutes = routes.filter(r => r.userEmail === currentUser.email);
+      
+      if (userRoutes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🗺️</div>
+            <h3 class="empty-title">Nog geen routes</h3>
+            <p class="empty-text">Maak je eerste route of upload een foto van je adreslijst.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = userRoutes.map(route => {
+        const completedStops = route.stops.filter(s => s.completed).length;
+        const progress = route.stops.length > 0 ? (completedStops / route.stops.length) * 100 : 0;
+        
+        return `
+          <div class="route-card">
+            <div class="route-header">
+              <div>
+                <div class="route-name">${route.name}</div>
+                <div class="route-meta">
+                  <span>📍 ${route.stops.length} stops</span>
+                  <span>📅 ${new Date(route.createdAt).toLocaleDateString('nl-NL')}</span>
+                </div>
+              </div>
+              <span class="route-status status-${route.status}">${route.status}</span>
+            </div>
+            
+            <div class="route-progress">
+              <div class="progress-header">
+                <span>Voortgang</span>
+                <span>${completedStops}/${route.stops.length} stops</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+              </div>
+            </div>
+            
+            <div class="stops-preview">
+              ${route.stops.slice(0, 3).map((stop, idx) => `
+                <div class="stop-item ${stop.completed ? 'completed' : ''}" onclick="toggleStop('${route.id}', ${idx})">
+                  <div class="stop-checkbox">✓</div>
+                  <div class="stop-info">
+                    <div style="font-size:11px;color:var(--text-muted)">Stop ${idx + 1}</div>
+                    <div class="stop-name">${stop.name}</div>
+                  </div>
+                  <button class="stop-btn" onclick="event.stopPropagation(); navigateTo('${stop.name}')">🧭</button>
+                </div>
+              `).join('')}
+              ${route.stops.length > 3 ? `<div style="text-align:center;color:var(--text-muted);font-size:13px;margin-top:10px">+${route.stops.length - 3} meer stops</div>` : ''}
+            </div>
+            
+            <div class="route-actions">
+              <button class="route-action-btn" onclick="startRoute('${route.id}')">▶️ Start</button>
+              <button class="route-action-btn" onclick="shareRoute('${route.id}')">📤 Delen</button>
+              <button class="route-action-btn primary" onclick="navigateRoute('${route.id}')">🧭 Navigeren</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function updateStats() {
+      const userRoutes = routes.filter(r => r.userEmail === currentUser.email);
+      const totalStops = userRoutes.reduce((acc, r) => acc + r.stops.length, 0);
+      const completedStops = userRoutes.reduce((acc, r) => acc + r.stops.filter(s => s.completed).length, 0);
+      const todayRoutes = userRoutes.filter(r => new Date(r.createdAt).toDateString() === new Date().toDateString());
+      const todayStops = todayRoutes.reduce((acc, r) => acc + r.stops.length, 0);
+      
+      document.getElementById('statTotalRoutes').textContent = userRoutes.length;
+      document.getElementById('statTodayStops').textContent = todayStops;
+      document.getElementById('statCompleted').textContent = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) + '%' : '0%';
+    }
+    
+    function toggleStop(routeId, stopIdx) {
+      const route = routes.find(r => r.id === routeId);
+      if (route) {
+        route.stops[stopIdx].completed = !route.stops[stopIdx].completed;
+        const allCompleted = route.stops.every(s => s.completed);
+        const someCompleted = route.stops.some(s => s.completed);
+        route.status = allCompleted ? 'completed' : someCompleted ? 'active' : 'pending';
+        localStorage.setItem('rf_routes', JSON.stringify(routes));
+        loadRoutes();
+        updateStats();
+      }
+    }
+    
+    function navigateTo(address) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+    }
+    
+    function startRoute(routeId) {
+      const route = routes.find(r => r.id === routeId);
+      if (route && route.stops.length > 0) {
+        navigateTo(route.stops[0].name);
+      }
+    }
+    
+    function navigateRoute(routeId) {
+      const route = routes.find(r => r.id === routeId);
+      if (route && route.stops.length > 0) {
+        const waypoints = route.stops.slice(0, -1).map(s => encodeURIComponent(s.name)).join('|');
+        const destination = encodeURIComponent(route.stops[route.stops.length - 1].name);
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints}`, '_blank');
+      }
+    }
+    
+    function shareRoute(routeId) {
+      const route = routes.find(r => r.id === routeId);
+      if (route) {
+        const text = `RouteFlow Route: ${route.name}\\n\\nStops:\\n${route.stops.map((s, i) => `${i + 1}. ${s.name}`).join('\\n')}`;
+        if (navigator.share) {
+          navigator.share({ title: route.name, text });
+        } else {
+          navigator.clipboard.writeText(text);
+          showToast('Route gekopieerd!');
+        }
+      }
+    }
+    
+    function showAddRouteModal() {
+      document.getElementById('addRouteModal').classList.add('active');
+    }
+    
+    function showPhotoModal() {
+      document.getElementById('photoModal').classList.add('active');
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    
+    function addStopInput() {
+      const list = document.getElementById('stopsList');
+      const num = list.children.length + 1;
+      const div = document.createElement('div');
+      div.className = 'stop-input-row';
+      div.innerHTML = `
+        <div class="stop-number-badge">${num}</div>
+        <input type="text" class="form-input stop-input" placeholder="Adres of locatie" style="flex:1">
+        <button class="btn-remove-stop" onclick="this.parentElement.remove()">×</button>
+      `;
+      list.appendChild(div);
+    }
+    
+    function optimizeRoute() {
+      showToast('Route wordt geoptimaliseerd... (Demo)');
+    }
+    
+    function saveRoute() {
+      const name = document.getElementById('routeName').value;
+      const stopInputs = document.querySelectorAll('.stop-input');
+      const stops = Array.from(stopInputs).map(input => ({
+        name: input.value.trim(),
+        completed: false
+      })).filter(s => s.name);
+      
+      if (!name) {
+        showToast('Vul een route naam in');
+        return;
+      }
+      if (stops.length === 0) {
+        showToast('Voeg minimaal 1 stop toe');
+        return;
+      }
+      
+      const newRoute = {
+        id: Date.now().toString(),
+        userEmail: currentUser.email,
+        name,
+        stops,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      routes.push(newRoute);
+      localStorage.setItem('rf_routes', JSON.stringify(routes));
+      
+      closeModal('addRouteModal');
+      document.getElementById('routeName').value = '';
+      document.getElementById('stopsList').innerHTML = `
+        <div class="stop-input-row">
+          <div class="stop-number-badge">1</div>
+          <input type="text" class="form-input stop-input" placeholder="Adres of locatie" style="flex:1">
+        </div>
+      `;
+      
+      loadRoutes();
+      updateStats();
+      showToast('Route opgeslagen!');
+    }
+    
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      document.getElementById('loadingOverlay').classList.add('active');
+      
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        
+        // Demo adressen
+        const demoAddresses = [
+          'Damrak 1, Amsterdam',
+          'Kalverstraat 203, Amsterdam',
+          'Leidseplein 25, Amsterdam'
+        ];
+        
+        const container = document.getElementById('ocrAddresses');
+        container.innerHTML = demoAddresses.map((addr, i) => `
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;padding:12px;background:var(--bg);border-radius:10px">
+            <div class="stop-number-badge">${i + 1}</div>
+            <input type="text" value="${addr}" id="ocrAddr${i}" style="flex:1;background:transparent;border:none;color:var(--text);font-size:14px">
+          </div>
+        `).join('');
+        
+        document.getElementById('ocrResults').style.display = 'block';
+        
+        // Voeg knop toe
+        if (!document.getElementById('createRouteFromOcrBtn')) {
+          const btn = document.createElement('button');
+          btn.id = 'createRouteFromOcrBtn';
+          btn.className = 'btn btn-primary';
+          btn.style.marginTop = '16px';
+          btn.textContent = 'Route maken van adressen';
+          btn.onclick = createRouteFromOcr;
+          document.getElementById('ocrResults').appendChild(btn);
+        }
+        
+        showToast('Adressen herkend!');
+      }, 2000);
+    }
+    
+    function createRouteFromOcr() {
+      const addresses = [];
+      for (let i = 0; i < 10; i++) {
+        const input = document.getElementById(`ocrAddr${i}`);
+        if (input && input.value.trim()) {
+          addresses.push({ name: input.value.trim(), completed: false });
+        }
+      }
+      
+      if (addresses.length === 0) {
+        showToast('Geen adressen gevonden');
+        return;
+      }
+      
+      const newRoute = {
+        id: Date.now().toString(),
+        userEmail: currentUser.email,
+        name: `Route van foto (${addresses.length} stops)`,
+        stops: addresses,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      routes.push(newRoute);
+      localStorage.setItem('rf_routes', JSON.stringify(routes));
+      
+      closeModal('photoModal');
+      document.getElementById('ocrResults').style.display = 'none';
+      document.getElementById('ocrAddresses').innerHTML = '';
+      
+      loadRoutes();
+      updateStats();
+      showToast(`Route met ${addresses.length} stops aangemaakt!`);
+    }
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
